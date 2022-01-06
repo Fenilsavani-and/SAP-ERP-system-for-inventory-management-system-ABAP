@@ -1,0 +1,381 @@
+main screen code----------------
+PROCESS BEFORE OUTPUT.
+ MODULE STATUS_0100.
+   CALL SUBSCREEN MSUB INCLUDING SY-REPID C.
+*
+PROCESS AFTER INPUT.
+ MODULE USER_COMMAND_0100.
+   CALL SUBSCREEN MSUB.
+--------------------------------------
+PROGRAM ZMAIN_G2.
+TABLES : ZINV_G2,ZOUT_G2,ZUPC_G2,ZSALE_G2,ZSALE_DIS_G2,ZPAY_STAT_G2,ZSC_G2,ZADDI_G2,ZUPD_G2,ZDEL_G2,ZSALE_CL_G2,ZPO_G2.
+
+DATA : C(4) TYPE C VALUE '101',
+       SUM(10)   TYPE N VALUE 0,
+       COUNT(10) TYPE N VALUE 0,
+       COUNT_OS(10) TYPE N VALUE 0,
+       COUNT_UP(10) TYPE N VALUE 0,
+       COUNT_O(10) TYPE N VALUE 0,
+       COUNT_DIS(10) TYPE N VALUE 0,
+       SUM_T(10)   TYPE N VALUE 0,
+       A TYPE DATE.
+
+
+TYPES : BEGIN OF ST,
+      ZPRID_G2 TYPE ZPRID_G2,
+      ZPRN_G2 TYPE ZPN_G2,
+      ZPRI_G2 TYPE ZPRI_G2,
+      ZST_G2 TYPE ZST_G2,
+      ZCAT_G2 TYPE ZCAT_G2,
+      ZDAT_G2 TYPE ZDAT_G2,
+  END OF ST.
+
+
+TYPES : BEGIN OF ST1,
+      ZORDID_G2 TYPE ZORDID_G2,
+      ZPRN_G2 TYPE ZPN_G2,
+      ZPRID_G2 TYPE ZPRID_G2,
+      ZSLPRI_G2 TYPE ZSLPRI_G2,
+      ZCAT_G2 TYPE ZCAT_G2,
+      ZDAT_G2 TYPE ZDAT_G2,
+      ZQUT_G2 TYPE ZQUT_G2,
+      ZUNIT_G2 TYPE ZUNIT_G2,
+  END OF ST1.
+
+
+DATA : IT TYPE STANDARD TABLE OF ZINV_G2,
+       IT1 TYPE STANDARD TABLE OF ZOUT_G2,
+       IT2 TYPE STANDARD TABLE OF ZUPC_G2,
+       IT3 TYPE STANDARD TABLE OF  ZSALE_G2,
+       IT4 TYPE STANDARD TABLE OF ZSALE_DIS_G2,
+       IT5 TYPE STANDARD TABLE OF ZPAY_STAT_G2,
+       IT6 TYPE STANDARD TABLE OF ZSC_G2,
+       WA TYPE ZINV_G2,
+       WA1 TYPE ZOUT_G2,
+       WA2 TYPE ZUPC_G2,
+       WA3 TYPE ZSALE_G2,
+       WA4 TYPE ZSALE_DIS_G2,
+       WA5 TYPE ZPAY_STAT_G2,
+       WA6 TYPE ZSC_G2,
+       WA9 TYPE ZSC_G2,
+       WA11 TYPE ZOUT_G2,
+       WA12 TYPE ST,
+       WA13 TYPE ST1.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0100 OUTPUT.
+  SET PF-STATUS 'MENUBAR'.
+  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0100 INPUT.
+CASE SY-UCOMM.
+  WHEN 'BACK'.
+    CALL TRANSACTION 'ZMAIN_G2'.
+    WHEN 'LOGOFF'.
+      CALL TRANSACTION 'ZLOGIN_G2'.
+  WHEN 'HOME1'.
+      C = 101.
+  WHEN 'ITEMLIST'.
+      SUBMIT ZINVENT_RP_G2 AND RETURN.
+  WHEN 'ADDI'.
+       C = 103.
+  WHEN 'UPCOMING'.
+       C = 104.
+  WHEN 'OUTOFSTOCK'.
+       C = 105.
+  WHEN 'SEARCHITEM'.
+       C = 106.
+  WHEN 'ACTIVE'.
+       SUBMIT ZSALE_RP_G2 AND RETURN.
+  WHEN 'ADDS'.
+       C = 201.
+  WHEN 'SEARCH'.
+       C = 203.
+  WHEN 'DISPATCHED'.
+       SUBMIT ZDISP_RP_G2 AND RETURN.
+  WHEN 'INVOICES'.
+       SUBMIT ZPAYSC_IN_G2 AND RETURN.
+  WHEN 'STATMENT'.
+       SUBMIT ZPAY_RP_G2 AND RETURN.
+  WHEN 'ADDP'.
+       C = 302.
+  WHEN 'IR'.
+       SUBMIT ZINVENT_RP_G2 AND RETURN.
+  WHEN 'SR'.
+       SUBMIT ZSALE_RP_G2 AND RETURN.
+  WHEN 'PR'.
+       SUBMIT ZPAY_RP_G2 AND RETURN.
+  WHEN 'UR'.
+       SUBMIT ZUPC_RP_G2 AND RETURN.
+  WHEN 'OR'.
+       SUBMIT ZOUT_RP_G2 AND RETURN.
+*  WHEN 'DR'.
+*       SUBMIT ZDISP_RP_G2 AND RETURN.
+  WHEN 'AR'.
+       SUBMIT ZADD_RP_G2 AND RETURN.
+  WHEN 'UPR'.
+       SUBMIT ZUPD_RP_G2 AND RETURN.
+  WHEN 'DR'.
+       SUBMIT ZDEL_RP_G2 AND RETURN.
+
+ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0101  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0101 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0101  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0101 INPUT.
+case SY-UCOMM.
+  WHEN 'GETDATA'.
+
+      SELECT ZSN_G2 FROM ZSC_G2 INTO TABLE IT6.
+          LOOP AT IT6 INTO WA6.
+            WA6-ZSN_G2 = WA6-ZSN_G2 + 1.
+          ENDLOOP.
+          WA6-ZSN_G2 = WA6-ZSN_G2.
+
+    SELECT * FROM ZINV_G2 INTO TABLE IT.
+      LOOP AT IT INTO WA.
+        COUNT = COUNT + 1.
+      ENDLOOP.
+      WA6-ZCOP_G2 = COUNT.
+
+    SELECT * FROM ZOUT_G2 INTO TABLE IT1.
+      LOOP AT IT1 INTO WA1.
+        COUNT_OS = COUNT_OS + 1.
+*        SUM = WA-ZST_G2 + SUM.
+      ENDLOOP.
+      WA6-ZCOOS_G2 = COUNT_OS.
+*WA1-ZSOS_G2 = SUM.
+
+                SELECT * FROM ZUPC_G2 INTO TABLE IT2.
+      LOOP AT IT2 INTO WA2.
+        COUNT_UP = COUNT_UP + 1.
+*        SUM = WA-ZST_G2 + SUM.
+        ENDLOOP.
+        WA6-ZCOUI_G2 = COUNT_OS.
+
+
+          SELECT * FROM ZINV_G2 INTO TABLE IT.
+          LOOP AT IT INTO WA.
+           SUM = WA-ZST_G2 + SUM.
+            ENDLOOP.
+            WA6-ZSOS_G2 = SUM.
+
+
+        SELECT * FROM ZSALE_G2 INTO TABLE IT3.
+      LOOP AT IT3 INTO WA3.
+        COUNT_O = COUNT_O + 1.
+*        SUM = WA-ZST_G2 + SUM.
+        ENDLOOP.
+        WA6-ZCOO_G2 = COUNT_O.
+
+               SELECT * FROM ZPAY_STAT_G2 INTO TABLE IT5.
+      LOOP AT IT5 INTO WA5.
+*        COUNT_UP = COUNT_UP + 1.
+        SUM_T = WA5-ZTOTAL_G2 + SUM_T.
+        ENDLOOP.
+        WA6-ZSOOA_G2 = SUM_T.
+
+
+       SELECT * FROM ZSALE_DIS_G2 INTO TABLE IT4.
+      LOOP AT IT4 INTO WA4.
+        COUNT_DIS = COUNT_DIS + 1.
+*        SUM = WA-ZST_G2 + SUM.
+        ENDLOOP.
+        WA6-ZCDO_G2 = COUNT_DIS.
+
+        WA6-ZDAT_G2 = SY-DATUM.
+
+INSERT INTO ZSC_G2 VALUES WA6.
+
+SELECT SINGLE ZSN_G2 ZCOP_G2 ZCOOS_G2 ZCOUI_G2 ZSOS_G2 ZCOO_G2 ZSOOA_G2 ZCDO_G2 ZDAT_G2 FROM ZSC_G2 INTO
+  ( WA9-ZSN_G2, WA9-ZCOP_G2, WA9-ZCOOS_G2, WA9-ZCOUI_G2, WA9-ZSOS_G2, WA9-ZCOO_G2, WA9-ZSOOA_G2, WA9-ZCDO_G2, WA9-ZDAT_G2 )
+.ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0103  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0103 INPUT.
+CASE SY-UCOMM.
+    WHEN 'AD'.
+      INSERT INTO ZINV_G2 VALUES WA.
+      INSERT INTO ZADDI_G2 VALUES WA.
+      WHEN 'UD'.
+      MODIFY ZINV_G2 FROM WA.
+      INSERT INTO ZUPD_G2 VALUES WA.
+      WHEN 'DD'.
+      DELETE ZINV_G2 FROM WA.
+      INSERT INTO ZDEL_G2 VALUES WA.
+
+      ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0103  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0103 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0104  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0104 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0104  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0104 INPUT.
+CASE SY-UCOMM.
+    WHEN 'AD1'.
+      INSERT INTO ZUPC_G2 VALUES WA2.
+      WHEN 'DD1'.
+      DELETE ZUPC_G2 FROM WA2.
+      ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0105  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0105 INPUT.
+CASE SY-UCOMM.
+    WHEN 'AD2'.
+      INSERT INTO ZOUT_G2 VALUES WA1.
+      WHEN 'DD2'.
+      DELETE ZOUT_G2 FROM WA1.
+      ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0105  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0105 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0106  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0106 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0106  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0106 INPUT.
+CASE SY-UCOMM.
+  WHEN 'GT'.
+    SELECT SINGLE ZPRN_G2 ZPRI_G2 ZST_G2 ZCAT_G2 ZDAT_G2 FROM ZINV_G2 INTO
+     (  WA12-ZPRN_G2, WA12-ZPRI_G2, WA12-ZST_G2, WA12-ZCAT_G2, WA12-ZDAT_G2 )
+       WHERE ZPRID_G2 = WA12-ZPRID_G2.
+      ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0201  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0201 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0201  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0201 INPUT.
+CASE SY-UCOMM.
+    WHEN 'PO'.
+      INSERT INTO ZSALE_G2 VALUES WA3.
+      INSERT INTO ZPO_G2 VALUES WA3.
+
+      WHEN 'CO'.
+      DELETE ZSALE_G2 FROM WA3.
+      INSERT INTO ZSALE_CL_G2 VALUES WA3.
+
+      ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0203  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0203 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0203  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0203 INPUT.
+CASE SY-UCOMM.
+  WHEN 'GD1'.
+    SELECT SINGLE  ZPRID_G2 ZPRN_G2 ZSLPRI_G2 ZQUT_G2 ZUNIT_G2 ZCAT_G2 ZDAT_G2 FROM ZSALE_G2 INTO
+     (  WA13-ZPRID_G2, WA13-ZPRN_G2, WA13-ZSLPRI_G2, WA13-ZQUT_G2, WA13-ZUNIT_G2, WA13-ZCAT_G2, WA13-ZDAT_G2 )
+       WHERE ZORDID_G2 = WA13-ZORDID_G2.
+      ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0302  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0302 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0302  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0302 INPUT.
+ CASE SY-UCOMM.
+    WHEN 'AP'.
+      INSERT INTO ZPAY_STAT_G2 VALUES WA5.
+      INSERT INTO ZADDP_G2 VALUES WA5.
+
+      WHEN 'RP'.
+      DELETE ZPAY_STAT_G2 FROM WA5.
+      INSERT INTO ZPAYREC_G2 VALUES WA5.
+
+      ENDCASE.
+ENDMODULE.
