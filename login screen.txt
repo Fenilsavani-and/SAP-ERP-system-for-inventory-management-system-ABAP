@@ -1,0 +1,161 @@
+-----------------login screen------------------------
+step-1 
+PROCESS BEFORE OUTPUT.
+MODULE STATUS_0001.
+
+  CALL SUBSCREEN SUBL INCLUDING SY-REPID A.
+*
+PROCESS AFTER INPUT.
+ MODULE USER_COMMAND_0001.
+   CALL SUBSCREEN SUBL.
+------------------------------------------------------
+PROGRAM ZLOGIN_G2.
+
+TABLES : ZUSER_G2.
+
+DATA : A(4) TYPE N VALUE '102',
+       B(4) TYPE N VALUE '',
+       ZUSERG2(12) TYPE C,UN(20) TYPE C,
+       ZPASSG2(8) TYPE C.
+
+TYPES : BEGIN OF ST,
+        ZUSERNAMEG2 TYPE ZUSERNAMEG2,
+        ZPASSWORDG2 TYPE ZPASSWORDG2,
+        ZNAMEG2 TYPE ZNAMEG2,
+        END OF ST.
+
+        DATA : IT TYPE STANDARD TABLE OF ST,IT1 TYPE STANDARD TABLE OF ZUSER_G2, WA2 TYPE ZUSER_G2,
+              WA TYPE ST,
+              WA1 TYPE ZUSER_G2,
+              P(20) TYPE C,
+              CP(20) TYPE C,
+              NCP(20) TYPE C,
+              NP(20) TYPE C.
+
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0001  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0001 OUTPUT.
+  SET PF-STATUS 'ZMENU'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0001  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0001 INPUT.
+CASE SY-UCOMM.
+    WHEN 'BACK'.
+      LEAVE PROGRAM.
+    WHEN 'REG'.
+      A = '101'.
+    WHEN 'LOG'.
+      A = '102'.
+    WHEN 'FOR'.
+      A = '103'.
+      ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0102  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0102 INPUT.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0102  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0102 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+  CASE SY-UCOMM.
+    WHEN 'LOGIN'.
+    SELECT ZUSERNAMEG2 ZPASSWORDG2 FROM ZUSER_G2 INTO TABLE IT.
+    LOOP AT IT INTO WA.
+     IF ZUSERG2 = WA-ZUSERNAMEG2.
+          IF ZPASSG2 =  WA-ZPASSWORDG2.
+*                  B = '201'.
+            MESSAGE 'LOGIN SUCCESSFULLY' TYPE 'I'.
+                  CALL TRANSACTION 'ZMAIN_G2'.
+          ELSE.
+             MESSAGE 'INVALID USERNAME OR PASSWORD' TYPE 'E'.
+          ENDIF.
+*     ELSE.
+*         MESSAGE 'WRONG DETAILS' TYPE 'I'.
+    ENDIF.
+
+      ENDLOOP.
+      ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0101  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0101 INPUT.
+CASE SY-UCOMM.
+  WHEN 'REGISTER'.
+
+    IF WA1-ZNAMEG2 IS INITIAL AND WA1-ZUSERNAMEG2 IS INITIAL AND WA1-ZPASSWORDG2 IS INITIAL.
+      MESSAGE 'FILL IS REQUIER FIELD' TYPE 'I'.
+    ELSE.
+   IF
+       CP = P.
+       WA1-ZPASSWORDG2 = CP.
+       MESSAGE 'PASSWORD IS VALIDED' TYPE 'I'.
+       INSERT INTO ZUSER_G2 VALUES WA1.
+       ELSE.
+
+               MESSAGE 'WRONG PASSWORD' TYPE 'I'.
+    ENDIF.
+    ENDIF.
+
+    ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0101  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0101 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0103  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0103 INPUT.
+ CASE SY-UCOMM.
+    WHEN 'CPASS'.
+   SELECT * FROM ZUSER_G2 INTO TABLE IT1 where ZUSERNAMEG2 = UN.
+ LOOP AT IT1 INTO WA2.
+     IF NP = NCP.
+       WA1-ZUSERNAMEG2 = WA2-ZUSERNAMEG2.
+       WA1-ZPASSWORDG2 = NCP.
+       WA1-ZNAMEG2 = WA2-ZNAMEG2.
+       MESSAGE 'UPDATED SUCCESSFULLY' TYPE 'I'.
+     MODIFY ZUSER_G2 FROM WA1.
+
+            ELSE.
+          MESSAGE 'WRONG PASSWORD' TYPE 'I'.
+       ENDIF.
+ENDLOOP.
+     ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0103  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0103 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+ENDMODULE.
